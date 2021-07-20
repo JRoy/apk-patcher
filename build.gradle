@@ -1,0 +1,50 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'application'
+    id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '7.0.0' apply false
+}
+
+group 'io.github.jroy'
+mainClassName = 'io.github.jroy.apkpatcher.ApkPatcherCli'
+
+apply plugin: 'com.github.johnrengelman.shadow'
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'io.github.jroy'
+            artifactId = 'apkpatcher'
+            version = '0.1'
+
+            from components.java
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    // apktool will publish to central in their next release, for now we do this since they block jitpack
+    api(files('lib/apktool-lib.jar'))
+    api(files('lib/brut.j.common.jar'))
+    api(files('lib/brut.j.dir.jar'))
+    api(files('lib/brut.j.util.jar'))
+    api 'org.smali:baksmali:2.5.2'
+    //noinspection GradlePackageUpdate
+    api 'commons-io:commons-io:2.11.0'
+    api 'org.apache.commons:commons-lang3:3.12.0'
+    api 'com.google.guava:guava:30.1.1-jre'
+    api 'org.smali:smali:2.5.2'
+    api 'xpp3:xpp3:1.1.4c'
+    api 'org.yaml:snakeyaml:1.29:android'
+
+    api 'com.github.patrickfav:uber-apk-signer:fc91ac2ce4'
+
+    implementation 'net.sourceforge.argparse4j:argparse4j:0.9.0'
+}
