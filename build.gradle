@@ -25,26 +25,17 @@ publishing {
 
 repositories {
     mavenCentral()
-    mavenLocal()
     maven { url 'https://jitpack.io' }
 }
 
 dependencies {
-    // apktool will publish to central in their next release, for now we do this since they block jitpack
-    api(files('lib/apktool-lib.jar'))
-    api(files('lib/brut.j.common.jar'))
-    api(files('lib/brut.j.dir.jar'))
-    api(files('lib/brut.j.util.jar'))
-    api 'org.smali:baksmali:2.5.2'
-    //noinspection GradlePackageUpdate
-    api 'commons-io:commons-io:2.11.0'
-    api 'org.apache.commons:commons-lang3:3.12.0'
-    api 'com.google.guava:guava:30.1.1-jre'
-    api 'org.smali:smali:2.5.2'
-    api 'xpp3:xpp3:1.1.4c'
-    api 'org.yaml:snakeyaml:1.29:android'
+    api 'org.apktool:apktool-lib:2.6.0'
+    api 'org.apktool:brut.j.common:2.6.0'
+    api 'org.apktool:brut.j.dir:2.6.0'
+    api 'org.apktool:brut.j.util:2.6.0'
 
     api 'com.github.patrickfav:uber-apk-signer:fc91ac2ce4'
+    api 'commons-io:commons-io:2.11.0'
 
     implementation 'net.sourceforge.argparse4j:argparse4j:0.9.0'
 }
