@@ -3,13 +3,11 @@ plugins {
     id 'java-library'
     id 'application'
     id 'maven-publish'
-    id 'com.github.johnrengelman.shadow' version '7.0.0' apply false
+    id "com.github.johnrengelman.shadow" version "7.1.0"
 }
 
 group 'io.github.jroy'
 mainClassName = 'io.github.jroy.apkpatcher.ApkPatcherCli'
-
-apply plugin: 'com.github.johnrengelman.shadow'
 
 publishing {
     publications {
