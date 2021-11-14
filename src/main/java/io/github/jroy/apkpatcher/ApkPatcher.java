@@ -87,6 +87,8 @@ public class ApkPatcher {
       if (line.trim().startsWith("stamp-")) {
         lines.remove(line);
 
+        FileUtils.writeLines(apktoolFile, lines);
+
         final File stampFile = new File(new File(outputDir, "unknown"), line.trim().split(":")[0]);
         if (!stampFile.exists()) {
           Logger.warn("Could not find certificate file '" + stampFile.getPath() + "' despite decoder listing!");
