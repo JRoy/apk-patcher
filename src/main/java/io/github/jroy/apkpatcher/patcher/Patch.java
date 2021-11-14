@@ -13,13 +13,19 @@ import java.util.Scanner;
 public abstract class Patch {
   private final String name;
   private final String[] terms;
+  private final boolean fileNameTerm;
   private final HashSet<PatchAttachPoint> attachmentPoints = new HashSet<>();
   private final List<String> patchedFile = new ArrayList<>();
 
   private int applied = 0;
 
   public Patch(String name, String... terms) {
+    this(name, false, terms);
+  }
+
+  public Patch(String name, boolean fileNameTerm, String... terms) {
     this.name = name;
+    this.fileNameTerm = fileNameTerm;
     this.terms = terms;
   }
 
@@ -80,5 +86,9 @@ public abstract class Patch {
 
   public String[] getTerms() {
     return terms;
+  }
+
+  public boolean isFileNameTerm() {
+    return fileNameTerm;
   }
 }

@@ -78,32 +78,38 @@ public class FileSearcher {
     }
   }
 
-  private boolean searchFile(Path file, Patch type) throws IOException {
-    List<String> list = new ArrayList<>(Arrays.asList(type.getTerms()));
-    try (Scanner scanner = new Scanner(file)) {
-      scanner:
-      while (scanner.hasNextLine()) {
-        String line = scanner.nextLine();
-        for (String curTerm : list) {
-          if (line.contains(curTerm)) {
-            list.remove(curTerm);
-            if (list.isEmpty()) {
-              break scanner;
+  private boolean searchFile(Path file, Patch patch) throws IOException {
+    List<String> list = new ArrayList<>(Arrays.asList(patch.getTerms()));
+
+    if (patch.isFileNameTerm()) {
+      list.removeIf(term -> file.getFileName().toString().contains(term));
+    } else {
+      try (Scanner scanner = new Scanner(file)) {
+        scanner:
+        while (scanner.hasNextLine()) {
+          String line = scanner.nextLine();
+          for (String curTerm : list) {
+            if (line.contains(curTerm)) {
+              list.remove(curTerm);
+              if (list.isEmpty()) {
+                break scanner;
+              }
+              break;
             }
-            break;
           }
         }
       }
     }
+
     if (list.isEmpty()) {
-      Logger.info("Found term occurrences in " + file.getFileName().toString() + " for patch " + type.getName());
+      Logger.info("Found term occurrences in " + file.getFileName().toString() + " for patch " + patch.getName());
       if (applyPatches) {
-        if (type.apply(file.toFile())) {
-          Logger.info("Successfully Applied Patch: " + type.getName());
-          appliedPatches.add(type);
+        if (patch.apply(file.toFile())) {
+          Logger.info("Successfully Applied Patch: " + patch.getName());
+          appliedPatches.add(patch);
           return true;
         }
-        Logger.error("Failed to apply patch: " + type.getName());
+        Logger.error("Failed to apply patch: " + patch.getName());
       }
       return true;
     }
