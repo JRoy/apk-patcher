@@ -13,6 +13,7 @@ import com.android.apksigner.SignerParams;
 import io.github.jroy.apkpatcher.patcher.Patch;
 import io.github.jroy.apkpatcher.util.FileSearcher;
 import io.github.jroy.apkpatcher.util.Logger;
+import io.github.jroy.apkpatcher.util.zipalign.ZipAligner;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -117,11 +118,19 @@ public class ApkPatcher {
       final Androlib androlib = new Androlib(new ApkOptions());
       LogManager.getLogManager().reset(); // apktool does some weird stuff to the logger so just get rid of all that
 
+      final File tmpBuildApk = File.createTempFile("apkbuild", ".apk");
+      tmpBuildApk.deleteOnExit();
+
       try {
-        androlib.build(outputDir, outputApk);
+        androlib.build(outputDir, tmpBuildApk);
       } catch (BrutException e) {
         throw new ApkPatcherException("Error while building APK", e);
       }
+
+      Logger.info("Aligning APK...");
+      final File tmpAlignApk = File.createTempFile("apkalign", ".apk");
+      tmpAlignApk.deleteOnExit();
+      new ZipAligner(tmpBuildApk, tmpAlignApk).run();
 
       Logger.info("Signing APK...");
 
@@ -146,16 +155,15 @@ public class ApkPatcher {
         passwordRetriever.close();
 
         final File tmpOutputApk = File.createTempFile("apksigner", ".apk");
+        tmpOutputApk.deleteOnExit();
 
         new ApkSigner.Builder(Collections.singletonList(signerConfig))
-            .setInputApk(outputApk)
+            .setInputApk(tmpAlignApk)
             .setOutputApk(tmpOutputApk)
             .build()
             .sign();
 
         Files.move(tmpOutputApk.toPath(), outputApk.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        //noinspection ResultOfMethodCallIgnored
-        tmpOutputApk.delete();
       } catch (Exception e) {
         throw new ApkPatcherException("Error while signing apk", e);
       }
