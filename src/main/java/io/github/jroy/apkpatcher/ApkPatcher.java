@@ -10,7 +10,7 @@ import brut.directory.DirectoryException;
 import com.android.apksig.ApkSigner;
 import com.android.apksigner.PasswordRetriever;
 import com.android.apksigner.SignerParams;
-import io.github.jroy.apkpatcher.patcher.Patch;
+import io.github.jroy.apkpatcher.patcher.IApply;
 import io.github.jroy.apkpatcher.util.FileSearcher;
 import io.github.jroy.apkpatcher.util.Logger;
 import io.github.jroy.apkpatcher.util.zipalign.ZipAligner;
@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.List;
@@ -37,9 +36,9 @@ public class ApkPatcher {
   private final String keystoreAlias;
   private final String keystorePassword;
   private final String keyPassword;
-  private final Patch[] patches;
+  private final IApply[] patches;
 
-  public ApkPatcher(File inputApk, File outputApk, boolean skipDecode, boolean skipPatch, boolean skipBuild, String prioritySearch, File keystoreFile, String keystoreAlias, String keystorePassword, String keyPassword, Patch[] patches) {
+  public ApkPatcher(File inputApk, File outputApk, boolean skipDecode, boolean skipPatch, boolean skipBuild, String prioritySearch, File keystoreFile, String keystoreAlias, String keystorePassword, String keyPassword, IApply[] patches) {
     this.inputApk = inputApk;
     this.outputApk = outputApk;
     this.skipDecode = skipDecode;
@@ -55,7 +54,6 @@ public class ApkPatcher {
 
   public void patch() throws IOException, ApkPatcherException {
     final File outputDir = new File("output/");
-    final FileSearcher fileSearcher = new FileSearcher(prioritySearch, !skipPatch, patches);
 
     if (!skipDecode) {
       decode(outputDir);
@@ -63,18 +61,8 @@ public class ApkPatcher {
 
     Logger.info((skipPatch ? "Searching" : "Patching") + " APK...");
 
-    final File[] smaliFolders = outputDir.listFiles(file -> file.getName().contains("smali"));
-    if (smaliFolders == null) {
-      throw new ApkPatcherException("Could not find smali folders!");
-    }
-
-    for (final File smaliFolder : smaliFolders) {
-      final Path path = smaliFolder.toPath();
-      Logger.info("Searching '" + path.getFileName().toString() + "/' for target files...");
-      fileSearcher.crawlSmaliFolder(path);
-    }
-
-    fileSearcher.validateExhaustiveSearch();
+    final FileSearcher fileSearcher = new FileSearcher(outputDir, prioritySearch, !skipPatch, patches);
+    fileSearcher.searchAndApply();
 
     Logger.info("Removing APK Certificates...");
     final File apktoolFile = new File(outputDir, "apktool.yml");

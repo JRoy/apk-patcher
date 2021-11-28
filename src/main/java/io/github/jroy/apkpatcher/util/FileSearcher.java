@@ -1,27 +1,70 @@
 package io.github.jroy.apkpatcher.util;
 
+import io.github.jroy.apkpatcher.ApkPatcherException;
+import io.github.jroy.apkpatcher.patcher.FileInjector;
+import io.github.jroy.apkpatcher.patcher.IApply;
 import io.github.jroy.apkpatcher.patcher.Patch;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Scanner;
 
 public class FileSearcher {
+  private final File outputDirectory;
   private final String prioritySearch;
   private final boolean applyPatches;
-  private final Patch[] patches;
-  private final List<Patch> appliedPatches = new ArrayList<>();
+  private final IApply[] patches;
+  private final List<IApply> appliedPatches = new ArrayList<>();
   private final HashSet<Path> exhaustiveSearches = new HashSet<>();
 
-  public FileSearcher(String prioritySearch, boolean applyPatches, Patch[] patches) {
+  public FileSearcher(File outputDirectory, String prioritySearch, boolean applyPatches, IApply[] patches) {
+    this.outputDirectory = outputDirectory;
     this.prioritySearch = prioritySearch;
     this.applyPatches = applyPatches;
     this.patches = patches;
   }
 
-  public void crawlSmaliFolder(Path directory) throws IOException {
+  public void searchAndApply() throws IOException, ApkPatcherException {
+    injectFileInjectors();
+    crawlSmaliFolders();
+  }
+
+  private void injectFileInjectors() {
+    for (IApply type : patches) {
+      if (type instanceof FileInjector) {
+        if (type.apply(outputDirectory)) {
+          Logger.info("Successfully Executed Injector: " + type.getName());
+          appliedPatches.add(type);
+          continue;
+        }
+        Logger.error("Failed to Execute Injector: " + type.getName());
+      }
+    }
+  }
+
+  private void crawlSmaliFolders() throws IOException, ApkPatcherException {
+    final File[] smaliFolders = outputDirectory.listFiles(file -> file.getName().contains("smali"));
+    if (smaliFolders == null) {
+      throw new ApkPatcherException("Could not find smali folders!");
+    }
+
+    for (final File smaliFolder : smaliFolders) {
+      final Path path = smaliFolder.toPath();
+      Logger.info("Searching '" + path.getFileName().toString() + "/' for target files...");
+      crawlSmaliFolder(path);
+    }
+
+    validateExhaustiveSearch();
+  }
+
+  private void crawlSmaliFolder(Path directory) throws IOException {
     try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory)) {
       for (Path path : directoryStream) {
         if (appliedPatches.size() == patches.length) {
@@ -40,7 +83,7 @@ public class FileSearcher {
     }
   }
 
-  public void validateExhaustiveSearch() throws IOException {
+  private void validateExhaustiveSearch() throws IOException {
     if (appliedPatches.size() == patches.length) {
       exhaustiveSearches.clear();
       return;
@@ -65,11 +108,11 @@ public class FileSearcher {
         }
 
         if (Files.isRegularFile(path) && Files.isReadable(path)) {
-          for (Patch type : patches) {
-            if (appliedPatches.contains(type)) {
+          for (IApply type : patches) {
+            if (appliedPatches.contains(type) || type instanceof FileInjector) {
               continue;
             }
-            if (searchFile(path, type)) {
+            if (searchFile(path, (Patch) type)) {
               break;
             }
           }

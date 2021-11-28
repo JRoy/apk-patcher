@@ -8,11 +8,6 @@ public class FilterOutputStreamEx extends FilterOutputStream {
 
   private long totalWritten = 0;
 
-  /**
-   * Creates new instance.
-   *
-   * @param out {@link OutputStream}.
-   */
   public FilterOutputStreamEx(OutputStream out) {
     super(out);
   }

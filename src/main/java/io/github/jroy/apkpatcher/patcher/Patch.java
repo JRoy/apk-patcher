@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 
-public abstract class Patch {
+public class Patch implements IApply {
   private final String name;
   private final String[] terms;
   private final boolean fileNameTerm;
@@ -29,6 +29,7 @@ public abstract class Patch {
     this.terms = terms;
   }
 
+  @Override
   public final boolean apply(File file) {
     try (Scanner fileScanner = new Scanner(file)) {
       while (fileScanner.hasNextLine()) {
@@ -80,6 +81,7 @@ public abstract class Patch {
     patchedFile.add(line);
   }
 
+  @Override
   public String getName() {
     return this.name;
   }
