@@ -3,8 +3,8 @@ package io.github.jroy.apkpatcher;
 import brut.androlib.Androlib;
 import brut.androlib.AndrolibException;
 import brut.androlib.ApkDecoder;
-import brut.androlib.ApkOptions;
 import brut.androlib.err.InFileNotFoundException;
+import brut.androlib.options.BuildOptions;
 import brut.common.BrutException;
 import brut.directory.DirectoryException;
 import com.android.apksig.ApkSigner;
@@ -103,7 +103,7 @@ public class ApkPatcher {
     if (!skipBuild) {
       Logger.info("Building APK...");
 
-      final Androlib androlib = new Androlib(new ApkOptions());
+      final Androlib androlib = new Androlib(new BuildOptions());
       LogManager.getLogManager().reset(); // apktool does some weird stuff to the logger so just get rid of all that
 
       final File tmpBuildApk = File.createTempFile("apkbuild", ".apk");

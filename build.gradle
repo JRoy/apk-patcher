@@ -27,10 +27,10 @@ repositories {
 }
 
 dependencies {
-    api 'org.apktool:apktool-lib:2.6.0'
-    api 'org.apktool:brut.j.common:2.6.0'
-    api 'org.apktool:brut.j.dir:2.6.0'
-    api 'org.apktool:brut.j.util:2.6.0'
+    api 'org.apktool:apktool-lib:2.6.1'
+    api 'org.apktool:brut.j.common:2.6.1'
+    api 'org.apktool:brut.j.dir:2.6.1'
+    api 'org.apktool:brut.j.util:2.6.1'
 
     api 'com.github.patrickfav:uber-apk-signer:fc91ac2ce4'
     api 'commons-io:commons-io:2.11.0'
