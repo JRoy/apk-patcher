@@ -6,6 +6,8 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class FileInjector implements IApply {
   private final String name;
@@ -27,7 +29,13 @@ public class FileInjector implements IApply {
    */
   @Override
   public boolean apply(File file) {
-    File target = new File(file, targetPath);
+    //noinspection ConstantConditions - If this is null, something is very wrong.
+    final File lastSmaliFolder = Arrays.stream(file.listFiles())
+        .filter(f -> f.isDirectory() && (f.getName().equals("smali") || f.getName().startsWith("smali_classes3")))
+        .max(Comparator.naturalOrder())
+        .orElseThrow();
+
+    File target = new File(lastSmaliFolder, targetPath);
     if (!target.getParentFile().mkdirs()) {
       Logger.error("Failed to create target directory, " + targetPath + ", for FileInjector: " + name);
       return false;
