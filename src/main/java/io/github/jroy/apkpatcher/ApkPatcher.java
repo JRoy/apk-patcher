@@ -18,11 +18,9 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
-import java.util.List;
 import java.util.logging.LogManager;
 
 public class ApkPatcher {
@@ -68,34 +66,6 @@ public class ApkPatcher {
     final File apktoolFile = new File(outputDir, "apktool.yml");
     if (!apktoolFile.exists()) {
       throw new ApkPatcherException("Could not find apktool.yml file!");
-    }
-
-    final List<String> lines = FileUtils.readLines(apktoolFile, StandardCharsets.UTF_8);
-    boolean found = false;
-    for (final String line : lines) {
-      if (line.trim().startsWith("stamp-")) {
-        lines.remove(line);
-
-        FileUtils.writeLines(apktoolFile, lines);
-
-        final File stampFile = new File(new File(outputDir, "unknown"), line.trim().split(":")[0]);
-        if (!stampFile.exists()) {
-          Logger.warn("Could not find certificate file '" + stampFile.getPath() + "' despite decoder listing!");
-          break;
-        }
-
-        if (stampFile.delete()) {
-          Logger.info("Removed APK Certificates!");
-        } else {
-          Logger.error("Could not remove APK Certificates!");
-        }
-        found = true;
-        break;
-      }
-    }
-
-    if (!found) {
-      Logger.warn("Could not find any APK Certificates, this is likely fine...");
     }
 
     Logger.info((skipPatch ? "Searched" : "Patched") + " APK!");
