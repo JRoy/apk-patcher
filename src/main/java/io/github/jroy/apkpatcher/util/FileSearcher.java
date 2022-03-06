@@ -66,8 +66,11 @@ public class FileSearcher {
     if (!smaliToMove.isEmpty()) {
       Logger.info("Moving " + smaliToMove.size() + " files to '" + lastSmaliFolder.getName() + "'...");
       for (File file : smaliToMove) {
-        final String filePath = file.getPath();
-        final File newLocation = new File(lastSmaliFolder, filePath.substring(filePath.indexOf(File.separator) + 1));
+        String filePath = file.getPath();
+        filePath = filePath.substring(filePath.indexOf(File.separator) + 1);
+        filePath = filePath.substring(filePath.indexOf(File.separator) + 1);
+
+        final File newLocation = new File(lastSmaliFolder, filePath);
 
         if (!newLocation.mkdirs()) {
           Logger.error("Failed to move smali to location '" + newLocation.getPath() + "'!");
