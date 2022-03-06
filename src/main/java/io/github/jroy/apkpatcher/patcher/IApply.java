@@ -5,5 +5,7 @@ import java.io.File;
 public interface IApply {
   boolean apply(File file);
 
+  boolean useNewDex();
+
   String getName();
 }

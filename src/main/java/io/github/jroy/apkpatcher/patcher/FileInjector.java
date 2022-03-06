@@ -6,8 +6,6 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Comparator;
 
 public class FileInjector implements IApply {
   private final String name;
@@ -26,29 +24,17 @@ public class FileInjector implements IApply {
     this.newSmaliFolder = newSmaliFolder;
   }
 
+  @Override
+  public boolean useNewDex() {
+    return newSmaliFolder;
+  }
+
   /**
    * @param file The apk output directory.
    */
   @Override
   public boolean apply(File file) {
-    //noinspection ConstantConditions - If this is null, something is very wrong.
-    final File lastSmaliFolder = Arrays.stream(file.listFiles())
-        .filter(f -> f.isDirectory() && (f.getName().equals("smali") || f.getName().startsWith("smali_classes")))
-        .max(Comparator.naturalOrder())
-        .orElseThrow();
-
-
-    File smaliFolder = lastSmaliFolder;
-    if (newSmaliFolder) {
-      final int nextDex = lastSmaliFolder.getName().length() == 5 ? 2 : Integer.parseInt(lastSmaliFolder.getName().substring(13)) + 1;
-      smaliFolder = new File(file, "smali_classes" + nextDex);
-      if (!smaliFolder.mkdirs()) {
-        Logger.error("Failed to create new smali folder for FileInjector" + name);
-        return false;
-      }
-    }
-
-    File target = new File(smaliFolder, targetPath);
+    File target = new File(file, targetPath);
 
     if (!target.getParentFile().mkdirs()) {
       Logger.error("Failed to create target directory, " + targetPath + ", for FileInjector: " + name);

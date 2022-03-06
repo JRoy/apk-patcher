@@ -62,7 +62,6 @@ public class ApkPatcher {
     final FileSearcher fileSearcher = new FileSearcher(outputDir, prioritySearch, !skipPatch, patches);
     fileSearcher.searchAndApply();
 
-    Logger.info("Removing APK Certificates...");
     final File apktoolFile = new File(outputDir, "apktool.yml");
     if (!apktoolFile.exists()) {
       throw new ApkPatcherException("Could not find apktool.yml file!");

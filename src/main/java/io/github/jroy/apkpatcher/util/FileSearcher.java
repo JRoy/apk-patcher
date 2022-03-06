@@ -10,8 +10,10 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
@@ -23,6 +25,8 @@ public class FileSearcher {
   private final IApply[] patches;
   private final List<IApply> appliedPatches = new ArrayList<>();
   private final HashSet<Path> exhaustiveSearches = new HashSet<>();
+  private final List<File> smaliToMove = new ArrayList<>();
+  private File lastSmaliFolder;
 
   public FileSearcher(File outputDirectory, String prioritySearch, boolean applyPatches, IApply[] patches) {
     this.outputDirectory = outputDirectory;
@@ -32,14 +36,53 @@ public class FileSearcher {
   }
 
   public void searchAndApply() throws IOException, ApkPatcherException {
-    injectFileInjectors();
+    boolean needNewSmaliFolder = false;
+    for (IApply type : patches) {
+      if (type.useNewDex()) {
+        needNewSmaliFolder = true;
+        break;
+      }
+    }
+
+    //noinspection ConstantConditions - If this is null, something is very wrong.
+    lastSmaliFolder = Arrays.stream(outputDirectory.listFiles())
+        .filter(f -> f.isDirectory() && (f.getName().equals("smali") || f.getName().startsWith("smali_classes")))
+        .max(Comparator.naturalOrder())
+        .orElseThrow();
+
+    if (needNewSmaliFolder) {
+      final int nextDex = lastSmaliFolder.getName().length() == 5 ? 2 : Integer.parseInt(lastSmaliFolder.getName().substring(13)) + 1;
+      final File newFolder = new File(outputDirectory, "smali_classes" + nextDex);
+      if (newFolder.mkdirs()) {
+        lastSmaliFolder = newFolder;
+      } else {
+        Logger.error("Failed to create new smali folder '" + newFolder.getName() + "'!");
+      }
+    }
+
+    executeFileInjectors();
     crawlSmaliFolders();
+
+    if (!smaliToMove.isEmpty()) {
+      Logger.info("Moving " + smaliToMove.size() + " files to '" + lastSmaliFolder.getName() + "'...");
+      for (File file : smaliToMove) {
+        final String filePath = file.getPath();
+        final File newLocation = new File(lastSmaliFolder, filePath.substring(filePath.indexOf(File.separator) + 1));
+
+        if (!newLocation.mkdirs()) {
+          Logger.error("Failed to move smali to location '" + newLocation.getPath() + "'!");
+          continue;
+        }
+
+        Files.move(file.toPath(), newLocation.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      }
+    }
   }
 
-  private void injectFileInjectors() {
+  private void executeFileInjectors() {
     for (IApply type : patches) {
       if (type instanceof FileInjector) {
-        if (type.apply(outputDirectory)) {
+        if (type.apply(lastSmaliFolder)) {
           Logger.info("Successfully Executed Injector: " + type.getName());
           appliedPatches.add(type);
           continue;
@@ -147,9 +190,14 @@ public class FileSearcher {
     if (list.isEmpty()) {
       Logger.info("Found term occurrences in " + file.getFileName().toString() + " for patch " + patch.getName());
       if (applyPatches) {
-        if (patch.apply(file.toFile())) {
+        final File patchFile = file.toFile();
+        if (patch.apply(patchFile)) {
           Logger.info("Successfully Applied Patch: " + patch.getName());
           appliedPatches.add(patch);
+
+          if (patch.useNewDex()) {
+            smaliToMove.add(patchFile);
+          }
           return true;
         }
         Logger.error("Failed to apply patch: " + patch.getName());

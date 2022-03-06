@@ -14,6 +14,7 @@ public class Patch implements IApply {
   private final String name;
   private final String[] terms;
   private final boolean fileNameTerm;
+  private final boolean moveSmaliFolder;
   private final HashSet<PatchAttachPoint> attachmentPoints = new HashSet<>();
   private final List<String> patchedFile = new ArrayList<>();
 
@@ -24,8 +25,13 @@ public class Patch implements IApply {
   }
 
   public Patch(String name, boolean fileNameTerm, String... terms) {
+    this(name, fileNameTerm, false, terms);
+  }
+
+  public Patch(String name, boolean fileNameTerm, boolean moveSmaliFolder, String... terms) {
     this.name = name;
     this.fileNameTerm = fileNameTerm;
+    this.moveSmaliFolder = moveSmaliFolder;
     this.terms = terms;
   }
 
@@ -49,6 +55,11 @@ public class Patch implements IApply {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public boolean useNewDex() {
+    return moveSmaliFolder;
   }
 
   private Boolean checkAttachmentPoints(String line, Scanner fileScanner) {
